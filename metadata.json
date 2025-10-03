@@ -1,0 +1,5 @@
+{
+  "name": "Bandung Cozy Coffee Finder",
+  "description": "An application to find cozy coffee shops in Bandung, complete with Google Maps integration and links to TikTok reviews, powered by the Gemini API.",
+  "requestFramePermissions": []
+}
