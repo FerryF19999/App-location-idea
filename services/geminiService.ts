@@ -76,10 +76,16 @@ export const getAiResponse = async (history: ChatMessage[], newMessage: string):
         return response.text;
     } catch (error) {
         console.error("Error getting response from Gemini API:", error);
-        if (error instanceof Error) {
-            // Propagate the specific error message (e.g., about the missing API key)
-            throw error;
-        }
-        throw new Error("Gagal mendapatkan respons dari AI. Coba lagi nanti.");
+        
+        const errorMessage = error instanceof Error 
+            ? error.message 
+            : "Gagal mendapatkan respons dari AI. Coba lagi nanti.";
+            
+        const errorResponse = {
+            reply: `Maaf, terjadi kesalahan teknis: ${errorMessage}`,
+            recommendations: [],
+        };
+        
+        return JSON.stringify(errorResponse);
     }
 };
