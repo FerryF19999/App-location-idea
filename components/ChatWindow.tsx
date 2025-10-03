@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, FormEvent, useCallback } from 'react';
-import type { ChatMessage } from '../types';
+import type { ChatMessage, CoffeeShop } from '../types';
 import { getAiResponse } from '../services/geminiService';
 import Header from './Header';
 import CoffeeShopCard from './CoffeeShopCard';
@@ -65,11 +65,35 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isOpen, onClose }) => {
             
             const aiResponseJson = JSON.parse(aiResponseText);
 
+            const recommendations = Array.isArray(aiResponseJson.recommendations)
+                ? aiResponseJson.recommendations
+                    .map((shop: unknown) => {
+                        if (!shop || typeof shop !== 'object') {
+                            return null;
+                        }
+                        const entry = shop as Record<string, unknown>;
+                        const scoreValue = typeof entry.score === 'number'
+                            ? entry.score
+                            : typeof entry.score === 'string'
+                                ? Number.parseFloat(entry.score)
+                                : undefined;
+
+                        return {
+                            name: String(entry.name ?? ''),
+                            address: String(entry.address ?? ''),
+                            reason: String(entry.reason ?? ''),
+                            score: Number.isFinite(scoreValue) ? Number(scoreValue) : undefined,
+                        };
+                    })
+                    .filter((shop): shop is CoffeeShop => Boolean(shop?.name && shop?.address && shop?.reason))
+                    .sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity))
+                : [];
+
             const aiMessage: ChatMessage = {
                 id: Date.now().toString() + '-ai',
                 sender: 'ai',
                 text: aiResponseJson.reply,
-                coffeeShops: aiResponseJson.recommendations,
+                coffeeShops: recommendations,
             };
 
             setMessages([...newMessages, aiMessage]);
