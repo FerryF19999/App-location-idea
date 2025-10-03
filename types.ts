@@ -13,4 +13,5 @@ export interface ChatMessage {
   sender: MessageSender;
   text?: string;
   coffeeShops?: CoffeeShop[];
+  rawAiResponse?: string;
 }

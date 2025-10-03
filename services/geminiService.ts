@@ -79,28 +79,38 @@ const modelConfig = {
 };
 
 const transformHistory = (history: ChatMessage[]): Content[] => {
-    return history.map((msg): Content => {
-        const textParts: string[] = [];
+    return history.map((msg): Content | null => {
+        const parts: string[] = [];
 
-        if (msg.text) {
-            textParts.push(msg.text);
+        if (msg.sender === 'ai' && msg.rawAiResponse) {
+            parts.push(msg.rawAiResponse);
         }
 
-        if (msg.coffeeShops && msg.coffeeShops.length > 0) {
+        if (msg.text) {
+            parts.push(msg.text);
+        }
+
+        if (msg.coffeeShops && msg.coffeeShops.length > 0 && msg.sender !== 'ai') {
             const list = msg.coffeeShops
                 .map((shop, index) => {
                     const scorePart = typeof shop.score === 'number' ? ` | skor: ${shop.score}` : '';
                     return `${index + 1}. ${shop.name} (${shop.address})${scorePart}`;
                 })
                 .join('\n');
-            textParts.push(`Rekomendasi sebelumnya:\n${list}`);
+            parts.push(`Referensi lokasi pengguna:\n${list}`);
+        }
+
+        const text = parts.join('\n\n').trim();
+
+        if (!text) {
+            return null;
         }
 
         return {
             role: msg.sender === 'user' ? 'user' : 'model',
-            parts: [{ text: textParts.join('\n\n') }],
+            parts: [{ text }],
         };
-    }).filter((content) => content.parts[0]?.text?.trim());
+    }).filter((content): content is Content => Boolean(content?.parts[0]?.text?.trim()));
 };
 
 export const getAiResponse = async (history: ChatMessage[], newMessage: string): Promise<string> => {

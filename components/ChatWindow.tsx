@@ -62,7 +62,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isOpen, onClose }) => {
             // Saring pesan selamat datang awal dari riwayat yang dikirim ke API
             const historyForApi = messages.filter(msg => msg.id !== 'init');
             const aiResponseText = await getAiResponse(historyForApi, currentInput);
-            
+
             const aiResponseJson = JSON.parse(aiResponseText);
 
             const recommendations = Array.isArray(aiResponseJson.recommendations)
@@ -94,6 +94,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isOpen, onClose }) => {
                 sender: 'ai',
                 text: aiResponseJson.reply,
                 coffeeShops: recommendations,
+                rawAiResponse: aiResponseText,
             };
 
             setMessages([...newMessages, aiMessage]);
