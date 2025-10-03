@@ -3,10 +3,31 @@ import type { ChatMessage } from '../types';
 
 let ai: GoogleGenAI;
 
+const FALLBACK_API_KEY = 'AIzaSyBgaJwTn-S1amEYU0uW-F8eg5VVo5k6l4k';
+
+function resolveApiKey(): string | undefined {
+    let apiKey: string | undefined;
+
+    if (typeof process !== 'undefined' && process.env) {
+        apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    }
+
+    if (!apiKey) {
+        const importMetaEnv = (typeof import.meta !== 'undefined') ? import.meta.env : undefined;
+        apiKey = importMetaEnv?.VITE_GEMINI_API_KEY || importMetaEnv?.GEMINI_API_KEY || importMetaEnv?.API_KEY;
+    }
+
+    if (!apiKey && typeof globalThis !== 'undefined') {
+        const globalConfig = (globalThis as Record<string, unknown> | undefined)?.__APP_CONFIG__ as Record<string, string> | undefined;
+        apiKey = globalConfig?.API_KEY || globalConfig?.GEMINI_API_KEY;
+    }
+
+    return apiKey || FALLBACK_API_KEY;
+}
+
 function getClient(): GoogleGenAI {
     if (!ai) {
-        // Safely access process.env, which may not be defined in browser environments.
-        const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+        const apiKey = resolveApiKey();
 
         if (!apiKey) {
             throw new Error("The API_KEY environment variable is not set. Please configure it in your deployment environment to use the AI features.");
