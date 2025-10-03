@@ -1,11 +1,20 @@
 import { GoogleGenAI, Type, Content } from "@google/genai";
 import type { ChatMessage } from '../types';
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable not set");
-}
+let ai: GoogleGenAI;
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+function getClient(): GoogleGenAI {
+    if (!ai) {
+        // Safely access process.env, which may not be defined in browser environments.
+        const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+
+        if (!apiKey) {
+            throw new Error("The API_KEY environment variable is not set. Please configure it in your deployment environment to use the AI features.");
+        }
+        ai = new GoogleGenAI({ apiKey });
+    }
+    return ai;
+}
 
 const coffeeShopSchema = {
   type: Type.OBJECT,
@@ -55,10 +64,11 @@ const transformHistory = (history: ChatMessage[]): Content[] => {
 
 export const getAiResponse = async (history: ChatMessage[], newMessage: string): Promise<string> => {
     try {
+        const aiClient = getClient();
         const fullHistory = transformHistory(history);
         const contents = [...fullHistory, { role: 'user', parts: [{ text: newMessage }] }];
 
-        const response = await ai.models.generateContent({
+        const response = await aiClient.models.generateContent({
             ...modelConfig,
             contents,
         });
@@ -66,6 +76,10 @@ export const getAiResponse = async (history: ChatMessage[], newMessage: string):
         return response.text;
     } catch (error) {
         console.error("Error getting response from Gemini API:", error);
+        if (error instanceof Error) {
+            // Propagate the specific error message (e.g., about the missing API key)
+            throw error;
+        }
         throw new Error("Gagal mendapatkan respons dari AI. Coba lagi nanti.");
     }
 };
