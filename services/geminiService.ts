@@ -5,9 +5,28 @@ let ai: GoogleGenAI;
 
 function getClient(): GoogleGenAI {
     if (!ai) {
-        // Prefer Vite's client-side environment variable, with SSR fallback support.
-        const apiKey = import.meta.env?.VITE_GEMINI_API_KEY
-            ?? ((typeof process !== 'undefined' && process.env) ? process.env.GEMINI_API_KEY : undefined);
+        // Prefer Vite's client-side environment variable. Keep a fallback for the
+        // legacy GEMINI_API_KEY (used before the Vite rename) so existing
+        // deployments keep working without having to rotate secrets immediately.
+        const viteApiKey = import.meta.env?.VITE_GEMINI_API_KEY;
+
+        // When the build runs through Vite, the following block is replaced at
+        // compile time with the literal value of `process.env.GEMINI_API_KEY`, so
+        // it is safe even though `process` is not defined in the browser. When
+        // we execute in an SSR/runtime context the real `process.env` lookup is
+        // evaluated instead.
+        let legacyGeminiKey: string | undefined;
+        try {
+            legacyGeminiKey = process.env.GEMINI_API_KEY;
+        } catch {
+            legacyGeminiKey = undefined;
+        }
+
+        const apiKey = viteApiKey
+            ?? legacyGeminiKey
+            ?? ((typeof process !== 'undefined' && process.env)
+                ? process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY
+                : undefined);
 
         if (!apiKey) {
             throw new Error("The VITE_GEMINI_API_KEY (or GEMINI_API_KEY for SSR) environment variable is not set. Please configure it in your deployment environment to use the AI features.");
