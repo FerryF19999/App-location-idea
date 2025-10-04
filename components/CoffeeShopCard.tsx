@@ -7,16 +7,55 @@ interface CoffeeShopCardProps {
   index: number;
 }
 
+const colorPalette = [
+    '#A16207', '#CA8A04', '#F59E0B', '#D97706',
+    '#78350F', '#B45309', '#92400E', '#C2410C',
+    '#44403C', '#57534E', '#78716C',
+];
+
+// Helper untuk menghasilkan warna konsisten berdasarkan nama
+const getHashColor = (name: string): string => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        hash = hash & hash; // Konversi ke 32bit integer
+    }
+    const index = Math.abs(hash) % colorPalette.length;
+    return colorPalette[index];
+};
+
+// Helper untuk mendapatkan inisial
+const getInitials = (name: string): string => {
+    const words = name.split(' ').filter(Boolean);
+    if (words.length > 1) {
+        return `${words[0][0]}${words[1][0]}`.toUpperCase();
+    }
+    return words.length > 0 ? words[0].substring(0, 2).toUpperCase() : '?';
+};
+
+// Komponen placeholder yang generatif dan elegan
+const GenerativeImagePlaceholder: React.FC<{ shopName: string }> = ({ shopName }) => {
+    const backgroundColor = getHashColor(shopName);
+    const initials = getInitials(shopName);
+
+    return (
+        <div 
+            className="w-full h-40 flex items-center justify-center text-white"
+            style={{ backgroundColor }}
+        >
+            <span className="text-4xl font-bold tracking-wider">{initials}</span>
+        </div>
+    );
+};
+
+
 const CoffeeShopCard: React.FC<CoffeeShopCardProps> = ({ shop, index }) => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isRendered, setIsRendered] = useState(false);
 
   useEffect(() => {
-    // Animasi kemunculan kartu yang berurutan
-    const timer = setTimeout(() => {
-      setIsRendered(true);
-    }, index * 100);
-
+    // Animasi kemunculan kartu
+    const timer = setTimeout(() => setIsRendered(true), index * 100);
     return () => clearTimeout(timer);
   }, [index]);
 
@@ -26,11 +65,8 @@ const CoffeeShopCard: React.FC<CoffeeShopCardProps> = ({ shop, index }) => {
   return (
     <div className={`bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-500 ease-out transform hover:scale-105 ${isRendered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
       <div className="relative">
-        <img 
-          src={`https://picsum.photos/400/250?random=${index}&grayscale&blur=1`} 
-          alt={`Suasana di ${shop.name}`}
-          className="w-full h-40 object-cover"
-        />
+        <GenerativeImagePlaceholder shopName={shop.name} />
+
         <button
           onClick={() => setIsFavorited(!isFavorited)}
           className="absolute top-3 right-3 p-2 bg-white/70 backdrop-blur-sm rounded-full group focus:outline-none focus:ring-2 focus:ring-red-400"

@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, Content } from "@google/genai";
+import { GoogleGenAI, Content, GenerateContentResponse } from "@google/genai";
 import type { ChatMessage } from '../types';
 
 let ai: GoogleGenAI;
@@ -16,76 +16,64 @@ function getClient(): GoogleGenAI {
     return ai;
 }
 
-const coffeeShopSchema = {
-  type: Type.OBJECT,
-  properties: {
-    reply: {
-      type: Type.STRING,
-      description: "Jawaban teks biasa untuk sapaan, pertanyaan umum, atau sebagai pengantar untuk rekomendasi."
-    },
-    recommendations: {
-      type: Type.ARRAY,
-      description: "Daftar rekomendasi coffee shop, hanya jika pengguna secara eksplisit memintanya.",
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          name: { type: Type.STRING, description: 'Nama coffee shop.' },
-          address: { type: Type.STRING, description: 'Alamat lengkap coffee shop.' },
-          reason: { type: Type.STRING, description: 'Alasan singkat mengapa tempat ini cozy atau nyaman.' },
-        },
-        required: ["name", "address", "reason"],
-      },
-    },
-  },
-  required: ["reply"]
-};
-
 const modelConfig = {
     model: 'gemini-2.5-flash',
     config: {
-        systemInstruction: `Kamu adalah "Barista AI", asisten virtual yang ramah dan ahli kopi di Bandung.
-- Selalu isi properti 'reply' dengan jawaban teks yang relevan dan ramah.
-- Jika pengguna meminta rekomendasi, isi array 'recommendations' dengan 5 tempat. Jika tidak, biarkan 'recommendations' kosong atau tidak ada.
-- Selalu jawab dalam format JSON yang valid sesuai skema.`,
-        responseMimeType: "application/json",
-        responseSchema: coffeeShopSchema,
+        systemInstruction: `Kamu adalah "Barista AI", seorang ahli kopi dan pemandu lokal di Bandung. Misi utamamu adalah memberikan rekomendasi kedai kopi yang paling akurat, relevan, dan terverifikasi.
+
+**Aturan Paling Penting:**
+1.  **AKURASI NAMA ADALAH SEGALANYA:** Nama kedai kopi yang kamu berikan **HARUS SAMA PERSIS** dengan nama yang terdaftar di Google Maps. Ini prioritas utamamu.
+2.  **VERIFIKASI FAKTA ITU WAJIB:** Jika pengguna menanyakan fitur spesifik (misal: 'live music', 'cocok untuk kerja', 'ada smoking area', 'pet friendly'), kamu **HARUS** menggunakan pencarian Google untuk memverifikasi informasi ini. Cek ulasan terbaru di Google Maps, situs resmi, atau media sosial (seperti Instagram) kedai tersebut.
+
+**Tugasmu:**
+1.  Gunakan kemampuan pencarian Google untuk menemukan kedai kopi yang **nyaman** di area Bandung sesuai permintaan pengguna.
+2.  Untuk setiap rekomendasi, berikan **nama lengkap (sesuai Google Maps)**, **alamat lengkap**, dan **alasan singkat** mengapa tempat itu nyaman.
+3.  Di dalam 'Alasan', **sertakan bukti verifikasimu**. Contoh: "*Terverifikasi dari Instagram mereka:* Sering mengadakan acara live music setiap akhir pekan." atau "*Terverifikasi dari Google Reviews:* Banyak pengunjung yang menyebutkan koneksi WiFi-nya cepat dan stabil."
+4.  Format responsmu **SECARA KETAT** menggunakan Markdown seperti di bawah ini. Jangan tambahkan teks pembuka atau penutup jika kamu memberikan rekomendasi.
+
+**Format Jawaban (Jika Memberi Rekomendasi):**
+
+Berikut adalah beberapa kedai kopi nyaman di [Area yang Diminta Pengguna]:
+
+**1. [Nama Lengkap Kedai Kopi Sesuai Google Maps]**
+*Alamat:* [Alamat Lengkap]
+*Alasan:* [Alasan mengapa tempat ini nyaman, LENGKAP DENGAN BUKTI VERIFIKASI]
+
+**2. [Nama Lengkap Kedai Kopi Sesuai Google Maps]**
+*Alamat:* [Alamat Lengkap]
+*Alasan:* [Alasan mengapa tempat ini nyaman, LENGKAP DENGAN BUKTI VERIFIKASI]
+
+... dan seterusnya.
+
+- Jika pengguna hanya mengobrol atau bertanya hal lain, balas secara natural dan ramah tanpa menggunakan format daftar di atas.`,
+        tools: [{googleSearch: {}}],
     },
 };
 
 const transformHistory = (history: ChatMessage[]): Content[] => {
     return history.map((msg): Content => {
-        const text = msg.text || ""; 
+        // Gabungkan teks, nama kedai kopi, dan sumber untuk membangun konteks historis yang lebih baik
+        let fullText = msg.text || "";
+        if (msg.coffeeShops) {
+            const shopText = msg.coffeeShops.map(s => `- ${s.name}: ${s.reason}`).join('\n');
+            fullText += `\nBerikut rekomendasinya:\n${shopText}`;
+        }
         return {
             role: msg.sender === 'user' ? 'user' : 'model',
-            parts: [{ text }],
+            parts: [{ text: fullText }],
         };
     });
 };
 
-export const getAiResponse = async (history: ChatMessage[], newMessage: string): Promise<string> => {
-    try {
-        const aiClient = getClient();
-        const fullHistory = transformHistory(history);
-        const contents = [...fullHistory, { role: 'user', parts: [{ text: newMessage }] }];
+export const getAiResponse = async (history: ChatMessage[], newMessage: string): Promise<GenerateContentResponse> => {
+    const aiClient = getClient();
+    const fullHistory = transformHistory(history);
+    const contents = [...fullHistory, { role: 'user', parts: [{ text: newMessage }] }];
 
-        const response = await aiClient.models.generateContent({
-            ...modelConfig,
-            contents,
-        });
+    const response = await aiClient.models.generateContent({
+        ...modelConfig,
+        contents,
+    });
 
-        return response.text;
-    } catch (error) {
-        console.error("Error getting response from Gemini API:", error);
-        
-        const errorMessage = error instanceof Error 
-            ? error.message 
-            : "Gagal mendapatkan respons dari AI. Coba lagi nanti.";
-            
-        const errorResponse = {
-            reply: `Maaf, terjadi kesalahan teknis: ${errorMessage}`,
-            recommendations: [],
-        };
-        
-        return JSON.stringify(errorResponse);
-    }
+    return response;
 };

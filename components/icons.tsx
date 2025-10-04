@@ -8,6 +8,14 @@ export const CoffeeCupIcon = () => (
   </svg>
 );
 
+export const CupIcon: React.FC<{className?: string}> = ({className}) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-8 w-8 text-amber-800"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 20.25c-2.485 0-4.5-2.015-4.5-4.5s2.015-4.5 4.5-4.5h4.5c2.485 0 4.5 2.015 4.5 4.5s-2.015 4.5-4.5 4.5H10z" />
+      <path d="M10 11.25V5.25a2.25 2.25 0 012.25-2.25h0a2.25 2.25 0 012.25 2.25v6" />
+      <path d="M19.5 11.25h1.5a2.25 2.25 0 012.25 2.25v1.5a2.25 2.25 0 01-2.25 2.25h-1.5" />
+    </svg>
+);
+
 export const MapPinIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -54,4 +62,16 @@ export const TrashIcon: React.FC<{ className?: string }> = ({ className = '' }) 
   <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
+);
+
+export const LinkIcon: React.FC<{ className?: string }> = ({ className = '' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-1.5 inline-block shrink-0 ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.536a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+    </svg>
+);
+
+export const BackArrowIcon: React.FC<{ className?: string }> = ({ className = '' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
 );
