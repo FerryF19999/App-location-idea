@@ -3,6 +3,7 @@ export interface CoffeeShop {
   name: string;
   address: string;
   reason: string;
+  score?: number;
 }
 
 export type MessageSender = 'user' | 'ai';
@@ -12,4 +13,5 @@ export interface ChatMessage {
   sender: MessageSender;
   text?: string;
   coffeeShops?: CoffeeShop[];
+  rawAiResponse?: string;
 }

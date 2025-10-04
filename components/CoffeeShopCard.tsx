@@ -44,6 +44,9 @@ const CoffeeShopCard: React.FC<CoffeeShopCardProps> = ({ shop, index }) => {
       </div>
       <div className="p-4">
         <h3 className="text-xl font-bold text-amber-900 mb-2">{shop.name}</h3>
+        {typeof shop.score === 'number' && (
+          <p className="text-sm font-semibold text-amber-700 mb-2">Skor relevansi: {shop.score.toFixed(1)}</p>
+        )}
         <p className="text-stone-500 mb-3 flex items-start text-sm">
             <span className="font-bold mr-2 text-stone-600 text-base">“</span>
             <span className="italic">{shop.reason}</span>
