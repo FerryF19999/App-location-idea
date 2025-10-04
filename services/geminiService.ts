@@ -5,11 +5,12 @@ let ai: GoogleGenAI;
 
 function getClient(): GoogleGenAI {
     if (!ai) {
-        // Safely access process.env, which may not be defined in browser environments.
-        const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+        // Prefer Vite's client-side environment variable, with SSR fallback support.
+        const apiKey = import.meta.env?.VITE_GEMINI_API_KEY
+            ?? ((typeof process !== 'undefined' && process.env) ? process.env.GEMINI_API_KEY : undefined);
 
         if (!apiKey) {
-            throw new Error("The API_KEY environment variable is not set. Please configure it in your deployment environment to use the AI features.");
+            throw new Error("The VITE_GEMINI_API_KEY (or GEMINI_API_KEY for SSR) environment variable is not set. Please configure it in your deployment environment to use the AI features.");
         }
         ai = new GoogleGenAI({ apiKey });
     }
