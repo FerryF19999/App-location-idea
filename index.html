@@ -29,22 +29,9 @@
       animation: bean-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite, fade-in-down 0.5s ease-out forwards;
     }
   </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.22.0"
-  }
-}
-</script>
-<!-- Add Babel Standalone for in-browser transpilation of TSX/JSX -->
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-slate-100">
   <div id="root"></div>
-  <!-- Use text/babel to let Babel transpile the script -->
-  <script type="text/babel" data-type="module" src="/index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>
