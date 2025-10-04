@@ -16,6 +16,5 @@ View your app in AI Studio: https://ai.studio/apps/drive/1l44N6gc2J0zM6jcP1IiNoB
 1. Install dependencies:
    `npm install`
 2. Copy `.env.local.example` to `.env.local` and replace the placeholder with your Gemini API key (prefixed with `VITE_`).
-   - Alternatifnya, Anda bisa menjalankan aplikasi tanpa berkas `.env.local` lalu memasukkan kunci melalui formulir "Konfigurasi Gemini API Key" yang muncul di tampilan agen. Nilainya akan tersimpan hanya di browser yang sedang digunakan.
 3. Run the app:
    `npm run dev`

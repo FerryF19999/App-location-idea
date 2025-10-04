@@ -3,18 +3,10 @@
 import React, { useState, useRef, useEffect, FormEvent } from 'react';
 // FIX: Removed unused 'Source' type which is not exported from '../types'.
 import type { CoffeeShop, ChatMessage } from '../types';
-import {
-    getAiResponse,
-    resolveGeminiApiKey,
-    storeGeminiApiKey,
-    clearStoredGeminiApiKey,
-    resetGeminiClient,
-    type GeminiApiKeyResolution,
-} from '../services/geminiService';
+import { getAiResponse } from '../services/geminiService';
 import Header from './Header';
 import CoffeeShopCard from './CoffeeShopCard';
 import useLocalStorage from '../hooks/useLocalStorage';
-import { LinkIcon, TrashIcon } from './icons';
 import AgentStatus from './AgentStatus';
 
 type SearchStatus = 'idle' | 'loading' | 'results' | 'error';
@@ -30,42 +22,9 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({ onBack }) => {
     const [results, setResults] = useState<CoffeeShop[]>([]);
     const [introText, setIntroText] = useState('');
     const [error, setError] = useState<string | null>(null);
-    const [apiKeyState, setApiKeyState] = useState<GeminiApiKeyResolution>(() => resolveGeminiApiKey());
-    const [apiKeyInput, setApiKeyInput] = useState('');
-    const [apiKeyFeedback, setApiKeyFeedback] = useState<string | null>(null);
     // FIX: Use the ChatMessage[] type for chat history to enforce structure.
     const [chatHistory, setChatHistory] = useLocalStorage<ChatMessage[]>('chatHistory', []); // Keep history for context
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-    const refreshApiKeyState = () => {
-        setApiKeyState(resolveGeminiApiKey());
-    };
-
-    const handleSaveApiKey = (event: FormEvent) => {
-        event.preventDefault();
-        const trimmedKey = apiKeyInput.trim();
-        if (!trimmedKey) {
-            setApiKeyFeedback('Masukkan Gemini API key yang valid.');
-            return;
-        }
-
-        storeGeminiApiKey(trimmedKey);
-        resetGeminiClient();
-        setApiKeyFeedback('API key berhasil disimpan untuk browser ini.');
-        setApiKeyInput('');
-        refreshApiKeyState();
-    };
-
-    const handleClearApiKey = () => {
-        clearStoredGeminiApiKey();
-        resetGeminiClient();
-        setApiKeyFeedback('API key lokal telah dihapus.');
-        refreshApiKeyState();
-    };
-
-    useEffect(() => {
-        setApiKeyFeedback(null);
-    }, [apiKeyState.source]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -145,8 +104,6 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({ onBack }) => {
     };
 
     const renderContent = () => {
-        const hasApiKey = Boolean(apiKeyState.key);
-
         switch (status) {
             case 'idle':
                 return (
@@ -186,88 +143,9 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({ onBack }) => {
                                 Coba Lagi
                             </button>
                         </div>
-                        {!hasApiKey && (
-                            <div className="p-6 bg-white border border-amber-200 rounded-xl shadow-sm text-left">
-                                <h4 className="text-lg font-semibold text-stone-700">Belum ada Gemini API key</h4>
-                                <p className="text-stone-600 mt-2">
-                                    Masukkan kunci API Gemini Anda di bawah ini untuk mengaktifkan fitur AI secara lokal. Kunci akan disimpan dengan aman di browser ini saja.
-                                </p>
-                            </div>
-                        )}
                     </div>
                 );
         }
-    };
-
-    const renderApiKeySection = () => {
-        const hasApiKey = Boolean(apiKeyState.key);
-        const isEnvDriven = apiKeyState.source === 'vite' || apiKeyState.source === 'runtime';
-
-        return (
-            <section className="mb-6">
-                <div className="p-5 bg-white border border-amber-100 rounded-xl shadow-sm">
-                    <div className="flex flex-col gap-3">
-                        <div>
-                            <h3 className="text-lg font-semibold text-stone-700">Konfigurasi Gemini API Key</h3>
-                            {hasApiKey ? (
-                                <p className="text-sm text-stone-500 mt-1">
-                                    {apiKeyState.source === 'localStorage' && 'Menggunakan API key yang disimpan di browser ini.'}
-                                    {apiKeyState.source === 'window' && 'Menggunakan API key dari konfigurasi runtime halaman.'}
-                                    {apiKeyState.source === 'vite' && 'Menggunakan API key dari variabel lingkungan build (import.meta.env).'}
-                                    {apiKeyState.source === 'runtime' && 'Menggunakan API key dari variabel lingkungan Node.js (process.env).'}
-                                </p>
-                            ) : (
-                                <p className="text-sm text-stone-500 mt-1">
-                                    Masukkan kunci API yang valid agar Barista AI dapat menjawab pertanyaan Anda.
-                                </p>
-                            )}
-                        </div>
-
-                        {apiKeyFeedback && (
-                            <div className="text-sm text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-                                {apiKeyFeedback}
-                            </div>
-                        )}
-
-                        {!isEnvDriven && (
-                            <form onSubmit={handleSaveApiKey} className="flex flex-col sm:flex-row gap-3">
-                                <input
-                                    type="password"
-                                    value={apiKeyInput}
-                                    onChange={(event) => setApiKeyInput(event.target.value)}
-                                    placeholder="Masukkan Gemini API key..."
-                                    className="flex-1 px-4 py-3 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                    autoComplete="off"
-                                />
-                                <div className="flex gap-2">
-                                    <button
-                                        type="submit"
-                                        className="px-4 py-3 bg-amber-700 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors"
-                                    >
-                                        Simpan
-                                    </button>
-                                    {hasApiKey && (
-                                        <button
-                                            type="button"
-                                            onClick={handleClearApiKey}
-                                            className="px-4 py-3 border border-stone-300 text-stone-600 rounded-lg font-semibold hover:bg-stone-100 transition-colors"
-                                        >
-                                            Hapus
-                                        </button>
-                                    )}
-                                </div>
-                            </form>
-                        )}
-
-                        {isEnvDriven && (
-                            <p className="text-xs text-stone-400">
-                                Untuk mengganti kunci ini, perbarui variabel lingkungan <code>VITE_GEMINI_API_KEY</code> lalu muat ulang aplikasi.
-                            </p>
-                        )}
-                    </div>
-                </div>
-            </section>
-        );
     };
 
     return (
@@ -275,7 +153,6 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({ onBack }) => {
             <Header onRestart={handleClearHistory} onBack={onBack} />
 
             <main className="flex-1 overflow-y-auto p-4 sm:p-8">
-                {renderApiKeySection()}
                 {renderContent()}
                 <div ref={messagesEndRef} />
             </main>
