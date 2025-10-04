@@ -10,26 +10,25 @@ function getClient(): GoogleGenAI {
         // deployments keep working without having to rotate secrets immediately.
         const viteApiKey = import.meta.env?.VITE_GEMINI_API_KEY;
 
-        // When the build runs through Vite, the following block is replaced at
-        // compile time with the literal value of `process.env.GEMINI_API_KEY`, so
-        // it is safe even though `process` is not defined in the browser. When
-        // we execute in an SSR/runtime context the real `process.env` lookup is
-        // evaluated instead.
-        let legacyGeminiKey: string | undefined;
+        // When the build runs through Vite, the `process.env` lookups below are
+        // statically replaced with the configured values. Wrapping the access in
+        // a try/catch keeps things safe in the browser where `process` is not
+        // defined, while still allowing SSR/runtime environments to populate the
+        // value at execution time.
+        let runtimeEnv: NodeJS.ProcessEnv | undefined;
         try {
-            legacyGeminiKey = process.env.GEMINI_API_KEY;
+            runtimeEnv = typeof process !== 'undefined' ? process.env : undefined;
         } catch {
-            legacyGeminiKey = undefined;
+            runtimeEnv = undefined;
         }
 
         const apiKey = viteApiKey
-            ?? legacyGeminiKey
-            ?? ((typeof process !== 'undefined' && process.env)
-                ? process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY
-                : undefined);
+            ?? runtimeEnv?.VITE_GEMINI_API_KEY
+            ?? runtimeEnv?.GEMINI_API_KEY
+            ?? runtimeEnv?.API_KEY;
 
         if (!apiKey) {
-            throw new Error("The VITE_GEMINI_API_KEY (or GEMINI_API_KEY for SSR) environment variable is not set. Please configure it in your deployment environment to use the AI features.");
+            throw new Error("The VITE_GEMINI_API_KEY (or GEMINI_API_KEY for SSR) environment variable is not set. Define it in your .env.local (or deployment environment) to enable the AI features.");
         }
         ai = new GoogleGenAI({ apiKey });
     }
