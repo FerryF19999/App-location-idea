@@ -1,37 +1,147 @@
 import { GoogleGenAI, Content, GenerateContentResponse } from "@google/genai";
 import type { ChatMessage } from '../types';
 
-let ai: GoogleGenAI;
+const LOCAL_STORAGE_KEYS = ['app.geminiApiKey', 'VITE_GEMINI_API_KEY', 'GEMINI_API_KEY', 'API_KEY'];
+
+type ApiKeySource = 'vite' | 'runtime' | 'window' | 'localStorage' | 'none';
+
+export interface GeminiApiKeyResolution {
+    key?: string;
+    source: ApiKeySource;
+}
+
+let ai: GoogleGenAI | undefined;
+let activeApiKey: string | undefined;
+
+const safeAccessRuntimeEnv = (): NodeJS.ProcessEnv | undefined => {
+    try {
+        return typeof process !== 'undefined' ? process.env : undefined;
+    } catch {
+        return undefined;
+    }
+};
+
+const readFromWindowConfig = (): string | undefined => {
+    if (typeof globalThis === 'undefined') {
+        return undefined;
+    }
+
+    const candidateKeys: Array<keyof typeof globalThis> = ['__GEMINI_API_KEY__', 'GEMINI_API_KEY', 'VITE_GEMINI_API_KEY', 'API_KEY'];
+    for (const candidate of candidateKeys) {
+        const value = (globalThis as Record<string, unknown>)[candidate];
+        if (typeof value === 'string' && value.trim()) {
+            return value.trim();
+        }
+    }
+
+    const maybeConfig = (globalThis as Record<string, unknown>).__APP_CONFIG__;
+    if (maybeConfig && typeof maybeConfig === 'object' && 'geminiApiKey' in maybeConfig) {
+        const apiKey = (maybeConfig as Record<string, unknown>).geminiApiKey;
+        if (typeof apiKey === 'string' && apiKey.trim()) {
+            return apiKey.trim();
+        }
+    }
+
+    return undefined;
+};
+
+const readFromLocalStorage = (): string | undefined => {
+    if (typeof globalThis === 'undefined' || !(globalThis as Record<string, unknown>).localStorage) {
+        return undefined;
+    }
+
+    try {
+        const storage = (globalThis as unknown as { localStorage: Storage }).localStorage;
+        for (const key of LOCAL_STORAGE_KEYS) {
+            const storedValue = storage.getItem(key);
+            if (storedValue && storedValue.trim()) {
+                return storedValue.trim();
+            }
+        }
+    } catch {
+        // Access to localStorage might be blocked (e.g., privacy mode). Swallow the error and fall back to other strategies.
+    }
+
+    return undefined;
+};
+
+export const resolveGeminiApiKey = (): GeminiApiKeyResolution => {
+    const viteApiKey = import.meta.env?.VITE_GEMINI_API_KEY?.trim();
+    if (viteApiKey) {
+        return { key: viteApiKey, source: 'vite' };
+    }
+
+    const runtimeEnv = safeAccessRuntimeEnv();
+    const runtimeApiKey = runtimeEnv?.VITE_GEMINI_API_KEY?.trim()
+        ?? runtimeEnv?.GEMINI_API_KEY?.trim()
+        ?? runtimeEnv?.API_KEY?.trim();
+    if (runtimeApiKey) {
+        return { key: runtimeApiKey, source: 'runtime' };
+    }
+
+    const windowApiKey = readFromWindowConfig();
+    if (windowApiKey) {
+        return { key: windowApiKey, source: 'window' };
+    }
+
+    const localStorageKey = readFromLocalStorage();
+    if (localStorageKey) {
+        return { key: localStorageKey, source: 'localStorage' };
+    }
+
+    return { key: undefined, source: 'none' };
+};
+
+export const storeGeminiApiKey = (apiKey: string): void => {
+    if (!apiKey.trim()) {
+        return;
+    }
+
+    if (typeof globalThis === 'undefined' || !(globalThis as Record<string, unknown>).localStorage) {
+        return;
+    }
+
+    try {
+        const storage = (globalThis as unknown as { localStorage: Storage }).localStorage;
+        for (const key of LOCAL_STORAGE_KEYS) {
+            storage.setItem(key, apiKey.trim());
+        }
+    } catch {
+        // Ignore write failures (e.g., storage disabled).
+    }
+};
+
+export const clearStoredGeminiApiKey = (): void => {
+    if (typeof globalThis === 'undefined' || !(globalThis as Record<string, unknown>).localStorage) {
+        return;
+    }
+
+    try {
+        const storage = (globalThis as unknown as { localStorage: Storage }).localStorage;
+        for (const key of LOCAL_STORAGE_KEYS) {
+            storage.removeItem(key);
+        }
+    } catch {
+        // Ignore failures.
+    }
+};
+
+export const resetGeminiClient = (): void => {
+    ai = undefined;
+    activeApiKey = undefined;
+};
 
 function getClient(): GoogleGenAI {
-    if (!ai) {
-        // Prefer Vite's client-side environment variable. Keep a fallback for the
-        // legacy GEMINI_API_KEY (used before the Vite rename) so existing
-        // deployments keep working without having to rotate secrets immediately.
-        const viteApiKey = import.meta.env?.VITE_GEMINI_API_KEY;
-
-        // When the build runs through Vite, the `process.env` lookups below are
-        // statically replaced with the configured values. Wrapping the access in
-        // a try/catch keeps things safe in the browser where `process` is not
-        // defined, while still allowing SSR/runtime environments to populate the
-        // value at execution time.
-        let runtimeEnv: NodeJS.ProcessEnv | undefined;
-        try {
-            runtimeEnv = typeof process !== 'undefined' ? process.env : undefined;
-        } catch {
-            runtimeEnv = undefined;
-        }
-
-        const apiKey = viteApiKey
-            ?? runtimeEnv?.VITE_GEMINI_API_KEY
-            ?? runtimeEnv?.GEMINI_API_KEY
-            ?? runtimeEnv?.API_KEY;
-
-        if (!apiKey) {
-            throw new Error("The VITE_GEMINI_API_KEY (or GEMINI_API_KEY for SSR) environment variable is not set. Define it in your .env.local (or deployment environment) to enable the AI features.");
-        }
-        ai = new GoogleGenAI({ apiKey });
+    const { key: apiKey } = resolveGeminiApiKey();
+    if (!apiKey) {
+        throw new Error("The VITE_GEMINI_API_KEY (or GEMINI_API_KEY for SSR) environment variable is not set. Define it in your .env.local (or deployment environment) to enable the AI features.");
     }
+
+    if (!ai || activeApiKey !== apiKey) {
+        ai = new GoogleGenAI({ apiKey });
+        activeApiKey = apiKey;
+    }
+
     return ai;
 }
 
