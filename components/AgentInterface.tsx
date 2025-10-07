@@ -7,7 +7,6 @@ import { getAiResponse } from '../services/geminiService';
 import Header from './Header';
 import CoffeeShopCard from './CoffeeShopCard';
 import useLocalStorage from '../hooks/useLocalStorage';
-import { LinkIcon, TrashIcon } from './icons';
 import AgentStatus from './AgentStatus';
 
 type SearchStatus = 'idle' | 'loading' | 'results' | 'error';
@@ -72,7 +71,7 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({ onBack }) => {
         try {
             // FIX: Pass the full `chatHistory` to the AI service. The previous mapping was causing a type error by stripping required properties.
             const aiResponse = await getAiResponse(chatHistory, currentInput);
-            
+
             const responseText = aiResponse.text;
             const { intro, coffeeShops } = parseAiResponse(responseText);
 
@@ -136,12 +135,14 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({ onBack }) => {
                 );
             case 'error':
                 return (
-                    <div className="text-center p-8 bg-red-50 rounded-lg">
-                        <h3 className="text-lg font-bold text-red-700">Oops, Terjadi Kesalahan</h3>
-                        <p className="text-red-600 mt-2">{error}</p>
-                        <button onClick={handleNewSearch} className="mt-4 bg-red-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-red-500 transition-colors">
-                            Coba Lagi
-                        </button>
+                    <div className="space-y-4">
+                        <div className="text-center p-8 bg-red-50 rounded-lg">
+                            <h3 className="text-lg font-bold text-red-700">Oops, Terjadi Kesalahan</h3>
+                            <p className="text-red-600 mt-2">{error}</p>
+                            <button onClick={handleNewSearch} className="mt-4 bg-red-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-red-500 transition-colors">
+                                Coba Lagi
+                            </button>
+                        </div>
                     </div>
                 );
         }
@@ -150,7 +151,7 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({ onBack }) => {
     return (
         <div className="flex flex-col h-full max-w-7xl mx-auto">
             <Header onRestart={handleClearHistory} onBack={onBack} />
-            
+
             <main className="flex-1 overflow-y-auto p-4 sm:p-8">
                 {renderContent()}
                 <div ref={messagesEndRef} />
