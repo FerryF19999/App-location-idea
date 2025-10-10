@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import VercelAnalytics from './components/VercelAnalytics';
 import AgentInterface from './components/AgentInterface';
 import LandingPage from './components/LandingPage';
 import Navbar from './components/Navbar';
@@ -21,6 +22,7 @@ const App: React.FC = () => {
                 {view === 'landing' && <LandingPage onStart={handleStart} />}
                 {view === 'agent' && <AgentInterface onBack={handleBack} />}
             </main>
+            <VercelAnalytics />
         </div>
     );
 };
