@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import VercelAnalytics from './components/VercelAnalytics';
 import AgentInterface from './components/AgentInterface';
 import LandingPage from './components/LandingPage';
 import Navbar from './components/Navbar';
@@ -34,6 +35,7 @@ const App: React.FC = () => {
             <main className="flex-1 overflow-y-auto">
                 {renderView()}
             </main>
+            <VercelAnalytics />
         </div>
     );
 };
