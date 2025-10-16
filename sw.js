@@ -1,8 +1,9 @@
-const STATIC_CACHE_NAME = 'barista-ai-static-cache-v2';
-const DYNAMIC_CACHE_NAME = 'barista-ai-dynamic-cache-v2';
+const STATIC_CACHE_NAME = 'barista-ai-static-cache-v3';
+const DYNAMIC_CACHE_NAME = 'barista-ai-dynamic-cache-v3';
+const APP_SHELL_URL = '/index.html';
 const urlsToCache = [
   '/',
-  '/index.html',
+  APP_SHELL_URL,
   '/index.tsx',
   '/App.tsx',
   '/types.ts',
@@ -56,44 +57,43 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') {
     return;
   }
-
+  
   const url = new URL(event.request.url);
 
-  // Strategy for app's own files (App Shell)
-  if (url.origin === self.location.origin) {
+  // For navigation requests, always serve the app shell from the cache.
+  // This is the core of the "App Shell Model" and ensures the SPA loads instantly and works offline.
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match(event.request)
+      caches.match(APP_SHELL_URL)
         .then(response => {
-          // Cache hit - return response
-          if (response) {
-            return response;
-          }
-          
-          // Not in cache, go to network
-          return fetch(event.request)
-            .catch(() => {
-              // If network fails for a navigation request, return the app shell from cache
-              if (event.request.mode === 'navigate') {
-                return caches.match('/index.html');
-              }
-            });
+          return response || fetch(APP_SHELL_URL);
         })
     );
     return;
   }
 
-  // Strategy for third-party assets (e.g., CDN, fonts)
-  // Cache-first, then network, with dynamic caching
+  // For same-origin assets (JS, components, etc.), use a cache-first strategy.
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      caches.match(event.request).then(response => {
+        return response || fetch(event.request);
+      })
+    );
+    return;
+  }
+
+  // For third-party requests (e.g., CDN, fonts), use a stale-while-revalidate strategy.
   event.respondWith(
     caches.open(DYNAMIC_CACHE_NAME).then(cache => {
       return cache.match(event.request).then(response => {
-        return response || fetch(event.request).then(networkResponse => {
-          // Check for valid response to cache
+        const fetchPromise = fetch(event.request).then(networkResponse => {
           if (networkResponse && networkResponse.status === 200) {
-            cache.put(event.request, networkResponse.clone());
+             cache.put(event.request, networkResponse.clone());
           }
           return networkResponse;
         });
+        // Return cached response immediately if available, and update cache in the background.
+        return response || fetchPromise;
       });
     })
   );
