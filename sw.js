@@ -1,9 +1,7 @@
-const STATIC_CACHE_NAME = 'barista-ai-static-cache-v3';
-const DYNAMIC_CACHE_NAME = 'barista-ai-dynamic-cache-v3';
-const APP_SHELL_URL = '/index.html';
-const urlsToCache = [
+const CACHE_NAME = 'barista-ai-cache-v4';
+const APP_SHELL_URLS = [
   '/',
-  APP_SHELL_URL,
+  '/index.html',
   '/index.tsx',
   '/App.tsx',
   '/types.ts',
@@ -27,74 +25,75 @@ const urlsToCache = [
   '/manifest.json',
 ];
 
+// Install: Caches app shell and takes control immediately
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE_NAME)
-      .then(cache => {
-        console.log('Opened static cache and caching core assets');
-        return cache.addAll(urlsToCache);
-      })
-  );
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+        .then(cache => {
+            console.log('Opened cache, caching app shell');
+            return cache.addAll(APP_SHELL_URLS);
+        })
+        .then(() => self.skipWaiting()) // Force the waiting service worker to become the active service worker.
+    );
 });
 
+// Activate: Cleans up old caches and takes control of uncontrolled clients
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [STATIC_CACHE_NAME, DYNAMIC_CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
-  );
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Deleting old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim()) // Take control of all open pages.
+    );
 });
+
 
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') {
-    return;
-  }
-  
-  const url = new URL(event.request.url);
+    // We only care about GET requests.
+    if (event.request.method !== 'GET') {
+        return;
+    }
 
-  // For navigation requests, always serve the app shell from the cache.
-  // This is the core of the "App Shell Model" and ensures the SPA loads instantly and works offline.
-  if (event.request.mode === 'navigate') {
+    // For navigation requests, serve the app shell (index.html) from the cache.
+    // This is the core of the SPA PWA experience. It ensures the app loads,
+    // and client-side routing can take over.
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            caches.match('/index.html')
+            .then(response => {
+                // Return cached index.html or fetch it if not cached.
+                return response || fetch('/index.html');
+            })
+        );
+        return;
+    }
+
+    // For all other requests (assets, API calls, etc.), use a "stale-while-revalidate" strategy.
+    // This provides a good balance of speed (from cache) and freshness (from network).
     event.respondWith(
-      caches.match(APP_SHELL_URL)
-        .then(response => {
-          return response || fetch(APP_SHELL_URL);
+        caches.open(CACHE_NAME).then(cache => {
+            return cache.match(event.request).then(cachedResponse => {
+                const fetchPromise = fetch(event.request).then(networkResponse => {
+                    // If we get a valid response, update the cache.
+                    if (networkResponse && networkResponse.status === 200) {
+                         cache.put(event.request, networkResponse.clone());
+                    }
+                    return networkResponse;
+                }).catch(err => {
+                    // If fetch fails, we will rely on the cachedResponse if it exists.
+                    console.warn(`Fetch failed for ${event.request.url}:`, err);
+                });
+
+                // Return the cached response immediately if it exists, 
+                // while the network request runs in the background to update the cache.
+                return cachedResponse || fetchPromise;
+            });
         })
     );
-    return;
-  }
-
-  // For same-origin assets (JS, components, etc.), use a cache-first strategy.
-  if (url.origin === self.location.origin) {
-    event.respondWith(
-      caches.match(event.request).then(response => {
-        return response || fetch(event.request);
-      })
-    );
-    return;
-  }
-
-  // For third-party requests (e.g., CDN, fonts), use a stale-while-revalidate strategy.
-  event.respondWith(
-    caches.open(DYNAMIC_CACHE_NAME).then(cache => {
-      return cache.match(event.request).then(response => {
-        const fetchPromise = fetch(event.request).then(networkResponse => {
-          if (networkResponse && networkResponse.status === 200) {
-             cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        });
-        // Return cached response immediately if available, and update cache in the background.
-        return response || fetchPromise;
-      });
-    })
-  );
 });
