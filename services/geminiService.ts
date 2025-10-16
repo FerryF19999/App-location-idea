@@ -1,15 +1,15 @@
 import { GoogleGenAI, Content, GenerateContentResponse } from "@google/genai";
 import type { ChatMessage } from '../types';
+import { getEnvValue } from "../utils/env";
 
 let ai: GoogleGenAI;
 
 function getClient(): GoogleGenAI {
     if (!ai) {
-        // Safely access process.env, which may not be defined in browser environments.
-        const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+        const apiKey = getEnvValue('GEMINI_API_KEY', 'VITE_GEMINI_API_KEY', 'API_KEY');
 
         if (!apiKey) {
-            throw new Error("The API_KEY environment variable is not set. Please configure it in your deployment environment to use the AI features.");
+            throw new Error("The Google Gemini API key is not configured. Please set GEMINI_API_KEY (or VITE_GEMINI_API_KEY) in your environment to use the AI features.");
         }
         ai = new GoogleGenAI({ apiKey });
     }

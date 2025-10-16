@@ -15,7 +15,9 @@ View your app in AI Studio: https://ai.studio/apps/drive/1l44N6gc2J0zM6jcP1IiNoB
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. (Optional) Provide your Vercel Analytics token by adding `VITE_VERCEL_ANALYTICS_ID=<token>` to [.env.local](.env.local)
-4. Run the app:
+2. Configure your environment variables in [.env](.env) (or `.env.local` if you prefer):
+   - `GEMINI_API_KEY` is required for the Gemini-powered chat experience and is prefilled with the team's shared key.
+   - `GOOGLE_MAPS_API_KEY` is optional but recommended for fetching coffee shop photos.
+   - (Optional) `VITE_VERCEL_ANALYTICS_ID` enables Vercel Analytics tracking when set.
+3. Run the app:
    `npm run dev`

@@ -1,11 +1,10 @@
 import { CoffeeShop } from '../types';
+import { getEnvValue } from '../utils/env';
 
 const getApiKey = (): string => {
-    // Safely access process.env, which may not be defined in browser environments.
-    const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+    const apiKey = getEnvValue('GOOGLE_MAPS_API_KEY', 'VITE_GOOGLE_MAPS_API_KEY', 'API_KEY');
     if (!apiKey) {
-        // Fallback or error for when the API key is not set.
-        console.error("The API_KEY environment variable is not set.");
+        console.error("The Google Maps API key is not set. Please configure GOOGLE_MAPS_API_KEY (or VITE_GOOGLE_MAPS_API_KEY) in your environment.");
         return '';
     }
     return apiKey;
