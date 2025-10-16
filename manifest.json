@@ -1,0 +1,16 @@
+{
+  "short_name": "Barista AI",
+  "name": "Barista AI: Kurator Kopi Bandung",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#f5f5f4",
+  "background_color": "#f5f5f4",
+  "description": "Kurator Kopi Personalmu untuk menemukan surga tersembunyi di Bandung."
+}

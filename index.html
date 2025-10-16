@@ -4,47 +4,63 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bandung Cozy Coffee Finder</title>
+  <meta name="description" content="An application to find cozy coffee shops in Bandung, complete with Google Maps integration and links to TikTok reviews, powered by the Gemini API.">
+  
+  <!-- PWA Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#f5f5f4">
+  <link rel="apple-touch-icon" href="/logo.svg">
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-    body {
-      font-family: 'Poppins', sans-serif;
+  <script>
+    // Customizing Tailwind to include animations and fonts used in the components
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            playfair: ['"Playfair Display"', 'serif'],
+          },
+          animation: {
+            'fade-in-down': 'fade-in-down 0.5s ease-out both',
+            'bean-pulse': 'bean-pulse 2s infinite ease-in-out',
+            'bean-fill': 'bean-fill 4s infinite linear',
+          },
+          keyframes: {
+            'fade-in-down': {
+              '0%': { opacity: '0', transform: 'translateY(-10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            'bean-pulse': {
+              '0%, 100%': { transform: 'scale(1)' },
+              '50%': { transform: 'scale(1.05)' },
+            },
+            'bean-fill': {
+                '0%, 100%': { transform: 'translateY(100%)' },
+                '50%': { transform: 'translateY(0%)' },
+            }
+          }
+        }
+      }
     }
-    @keyframes bean-fill {
-      from { transform: translateX(-100%); }
-      to { transform: translateX(0%); }
-    }
-    @keyframes bean-pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.05); opacity: 0.95; }
-    }
-    @keyframes fade-in-down {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-bean-fill {
-      animation: bean-fill 2.5s ease-in-out infinite;
-    }
-    .animate-bean-pulse {
-      animation: bean-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite, fade-in-down 0.5s ease-out forwards;
-    }
-  </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.22.0"
-  }
-}
-</script>
-<!-- Add Babel Standalone for in-browser transpilation of TSX/JSX -->
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoVBL5gDdqGFUFdIkz99itLCY/sVFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
-<body class="bg-slate-100">
+<body class="antialiased">
   <div id="root"></div>
-  <!-- Use text/babel to let Babel transpile the script -->
-  <script type="text/babel" data-type="module" src="/index.tsx"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+      "@google/genai": "https://aistudiocdn.com/@google/genai@^1.22.0",
+      "react/": "https://aistudiocdn.com/react@^19.2.0/",
+      "react": "https://aistudiocdn.com/react@^19.2.0"
+    }
+  }
+  </script>
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>

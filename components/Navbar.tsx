@@ -1,5 +1,5 @@
 import React from 'react';
-import { CupIcon } from './icons';
+import { BaristaLogoIcon } from './icons';
 
 const Navbar: React.FC = () => {
     return (
@@ -8,7 +8,7 @@ const Navbar: React.FC = () => {
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center gap-3">
                          <div className="inline-block p-2 bg-amber-100 rounded-full">
-                            <CupIcon className="h-6 w-6 text-amber-800" />
+                            <BaristaLogoIcon className="h-6 w-6 text-amber-800" />
                         </div>
                         <span className="text-xl font-bold text-stone-800">
                             Barista AI

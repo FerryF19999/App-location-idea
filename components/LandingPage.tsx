@@ -1,8 +1,9 @@
 import React from 'react';
-import { MapPinIcon, TikTokIcon } from './icons';
+import { MapPinIcon, TikTokIcon, RouteIcon, ZodiacIcon } from './icons';
 
 interface LandingPageProps {
-    onStart: () => void;
+    onStart: (prompt?: string) => void;
+    onStartKalcer: () => void;
 }
 
 const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
@@ -17,8 +18,14 @@ const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; children: Re
     </div>
 );
 
+const zodiacs = [
+    { name: 'Aries', sign: 'aries' as const }, { name: 'Taurus', sign: 'taurus' as const }, { name: 'Gemini', sign: 'gemini' as const },
+    { name: 'Cancer', sign: 'cancer' as const }, { name: 'Leo', sign: 'leo' as const }, { name: 'Virgo', sign: 'virgo' as const },
+    { name: 'Libra', sign: 'libra' as const }, { name: 'Scorpio', sign: 'scorpio' as const }, { name: 'Sagittarius', sign: 'sagittarius' as const },
+    { name: 'Capricorn', sign: 'capricorn' as const }, { name: 'Aquarius', sign: 'aquarius' as const }, { name: 'Pisces', sign: 'pisces' as const }
+];
 
-const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onStart, onStartKalcer }) => {
     return (
         <div className="w-full bg-stone-50">
             {/* Hero Section */}
@@ -28,14 +35,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                         Temukan Surga Kopi <span className="text-amber-700">Tersembunyi</span> di Bandung
                     </h1>
                     <p className="mt-6 text-lg sm:text-xl text-stone-600 max-w-2xl mx-auto">
-                        Dengan Barista AI, dapatkan rekomendasi kedai kopi <i>cozy</i> yang dipersonalisasi, lengkap dengan integrasi peta dan ulasan TikTok.
+                        Gunakan AI untuk mendapatkan rekomendasi, merancang rute petualangan kopi, atau jelajahi hotspot kopi di peta interaktif.
                     </p>
-                    <button
-                        onClick={onStart}
-                        className="mt-10 px-8 py-4 bg-amber-700 text-white font-bold text-lg rounded-full shadow-lg hover:bg-amber-600 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-amber-300"
-                    >
-                        Mulai Petualangan Kopi Anda
-                    </button>
+                    <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <button
+                            onClick={() => onStart()}
+                            className="w-full sm:w-auto px-8 py-4 bg-amber-700 text-white font-bold text-lg rounded-full shadow-lg hover:bg-amber-600 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-amber-300"
+                        >
+                            Tanya Barista AI
+                        </button>
+                    </div>
                 </div>
             </section>
 
@@ -44,8 +53,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                 <div className="max-w-5xl mx-auto">
                     <h2 className="text-3xl font-bold text-center text-stone-800 mb-12">Mengapa Memilih Barista AI?</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <FeatureCard icon={<BrainIcon />} title="Rekomendasi Cerdas">
-                            AI kami memahami preferensi "nyaman" Anda dan mencari tempat terbaik menggunakan data web terbaru.
+                        <FeatureCard icon={<RouteIcon />} title="Rute Kopi Kustom">
+                            Minta AI untuk membuatkan itinerary "coffee crawl" yang dipersonalisasi sesuai keinginan dan durasi Anda.
                         </FeatureCard>
                         <FeatureCard icon={<MapPinIcon />} title="Integrasi Peta">
                             Langsung lihat lokasi dan arah ke kedai kopi pilihan Anda dengan sekali klik melalui Google Maps.
@@ -57,23 +66,51 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                 </div>
             </section>
             
+            {/* Zodiac Section */}
+            <section className="py-20 px-4 bg-stone-100">
+                <div className="max-w-4xl mx-auto text-center">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-stone-800 mb-4">Takdir Kopimu Tertulis di Bintang</h2>
+                    <p className="text-lg text-stone-600 max-w-2xl mx-auto mb-10">
+                        Pilih zodiakmu dan biarkan Barista AI menemukan kedai kopi yang paling cocok dengan kepribadian kosmikmu.
+                    </p>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                        {zodiacs.map((z) => (
+                            <button
+                                key={z.sign}
+                                onClick={() => onStart(`Rekomendasikan satu tempat kopi di Bandung yang cocok untuk zodiak ${z.name}`)}
+                                className="flex flex-col items-center p-4 bg-white rounded-lg shadow-md hover:shadow-xl hover:scale-105 transition-all duration-200 border border-stone-200 group"
+                                title={`Rekomendasi untuk ${z.name}`}
+                            >
+                                <ZodiacIcon sign={z.sign} className="w-10 h-10 text-stone-400 group-hover:text-amber-600 transition-colors" />
+                                <span className="mt-2 text-sm font-semibold text-stone-700">{z.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Kalcer Test Section */}
+            <section className="py-20 px-4 bg-stone-800 text-white">
+                <div className="max-w-4xl mx-auto text-center">
+                    <div className="mb-4 text-4xl">✨</div>
+                    <h2 className="text-3xl sm:text-4xl font-bold mb-4">Seberapa Kalcer Kamu?</h2>
+                    <p className="text-lg text-stone-300 max-w-2xl mx-auto mb-8">
+                        Ikuti kuis singkat yang dibuat oleh AI untuk mengetahui seberapa dalam pengetahuanmu tentang tren terkini di Bandung.
+                    </p>
+                    <button
+                        onClick={onStartKalcer}
+                        className="px-8 py-4 bg-amber-500 text-stone-900 font-bold text-lg rounded-full shadow-lg hover:bg-amber-400 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-amber-300"
+                    >
+                        Cek Tingkat Kekalceranmu
+                    </button>
+                </div>
+            </section>
+            
             <footer className="text-center py-6 bg-stone-200">
                 <p className="text-sm text-stone-600">&copy; {new Date().getFullYear()} Barista AI. Dipersembahkan oleh Gemini.</p>
             </footer>
         </div>
     );
 };
-
-const BrainIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9.5 12c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5-2 4.5-4.5 4.5" />
-        <path d="M14 9.5c-2.5 0-4.5-2-4.5-4.5S11.5.5 14 .5s4.5 2 4.5 4.5" />
-        <path d="M4.5 14c-2.5 0-4.5-2-4.5-4.5S2 5 4.5 5s4.5 2 4.5 4.5" />
-        <path d="M9.5 19c0 2.5 2 4.5 4.5 4.5s4.5-2 4.5-4.5-2-4.5-4.5-4.5" />
-        <path d="M14 14.5c2.5 0 4.5 2 4.5 4.5s-2 4.5-4.5 4.5-4.5-2-4.5-4.5" />
-        <path d="M4.5 9.5C2 9.5.5 11.5.5 14s1.5 4.5 4 4.5 4.5-2 4.5-4.5" />
-    </svg>
-);
-
 
 export default LandingPage;

@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { CoffeeShop } from '../types';
 import { TikTokIcon, HeartIcon, MapPinIcon } from './icons';
 
-interface CoffeeShopCardProps {
+interface CoffeeShopListItemProps {
   shop: CoffeeShop;
-  index: number;
 }
 
-// Helper to get initials
+// Helper untuk mendapatkan inisial
 const getInitials = (name: string): string => {
     const words = name.split(' ').filter(Boolean);
     if (words.length > 1) {
@@ -16,7 +15,7 @@ const getInitials = (name: string): string => {
     return words.length > 0 ? words[0].substring(0, 2).toUpperCase() : '?';
 };
 
-// Enhanced placeholder component
+// Komponen placeholder yang telah disempurnakan
 const GenerativeImagePlaceholder: React.FC<{ shopName: string }> = ({ shopName }) => {
     const getHash = (name: string) => {
         let hash = 0;
@@ -42,21 +41,14 @@ const GenerativeImagePlaceholder: React.FC<{ shopName: string }> = ({ shopName }
 };
 
 
-const CoffeeShopCard: React.FC<CoffeeShopCardProps> = ({ shop, index }) => {
+const CoffeeShopListItem: React.FC<CoffeeShopListItemProps> = ({ shop }) => {
   const [isFavorited, setIsFavorited] = useState(false);
-  const [isRendered, setIsRendered] = useState(false);
-
-  useEffect(() => {
-    // Staggered animation effect
-    const timer = setTimeout(() => setIsRendered(true), index * 100);
-    return () => clearTimeout(timer);
-  }, [index]);
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${shop.name}, ${shop.address}`)}`;
   const tiktokSearchUrl = `https://www.tiktok.com/search?q=${encodeURIComponent(`${shop.name} bandung review`)}`;
 
   return (
-    <div className={`bg-white p-4 rounded-xl shadow-md border border-stone-200/80 transition-all duration-300 hover:shadow-lg hover:border-stone-300 hover:scale-[1.02] ${isRendered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+    <div className="bg-white p-4 rounded-xl shadow-md border border-stone-200/80 transition-all duration-300 hover:shadow-lg hover:border-stone-300 hover:scale-[1.02] animate-fade-in-down">
       <div className="flex items-start gap-4">
         <GenerativeImagePlaceholder shopName={shop.name} />
         <div className="flex-1 min-w-0">
@@ -105,4 +97,4 @@ const CoffeeShopCard: React.FC<CoffeeShopCardProps> = ({ shop, index }) => {
   );
 };
 
-export default CoffeeShopCard;
+export default CoffeeShopListItem;
